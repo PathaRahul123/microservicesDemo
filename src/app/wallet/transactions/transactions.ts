@@ -90,7 +90,7 @@ import { Transaction } from '../../shared/models/models';
             <tr *ngFor="let txn of transactions">
               <td>{{ txn.timestamp | date:'short' }}</td>
               <td class="ref">{{ txn.transactionRef }}</td>
-              <td>{{ txn.description }}</td>
+              <td>{{ sanitizeDescription(txn.description) }}</td>
               <td><span class="badge badge-type">{{ txn.type }}</span></td>
               <td><span class="badge badge-status" [ngClass]="txn.status">{{ txn.status }}</span></td>
               <td class="amount fw-bold" [class.text-success]="!isOutgoing(txn)" [class.text-danger]="isOutgoing(txn)">
@@ -186,9 +186,24 @@ export class TransactionsComponent implements OnInit {
       // We append page data if using filter using Spring's pageable
       const payload = { ...formVals, page: this.currentPage, size: this.pageSize };
 
-      // Convert local datetime to ISO so Spring accepts it
-      if (payload.startDate) payload.startDate = new Date(payload.startDate).toISOString();
-      if (payload.endDate) payload.endDate = new Date(payload.endDate).toISOString();
+      // Convert local datetime to ISO so Spring accepts it (remove Z and ms if any)
+      if (payload.startDate) {
+        const d = new Date(payload.startDate);
+        // build yyyy-MM-dd'T'HH:mm:ss format local time
+        payload.startDate = d.getFullYear() + '-' +
+          String(d.getMonth() + 1).padStart(2, '0') + '-' +
+          String(d.getDate()).padStart(2, '0') + 'T' +
+          String(d.getHours()).padStart(2, '0') + ':' +
+          String(d.getMinutes()).padStart(2, '0') + ':00';
+      }
+      if (payload.endDate) {
+        const d = new Date(payload.endDate);
+        payload.endDate = d.getFullYear() + '-' +
+          String(d.getMonth() + 1).padStart(2, '0') + '-' +
+          String(d.getDate()).padStart(2, '0') + 'T' +
+          String(d.getHours()).padStart(2, '0') + ':' +
+          String(d.getMinutes()).padStart(2, '0') + ':00';
+      }
 
       this.walletService.filterTransactions(payload).subscribe({
         next: (res) => this.handleResponse(res),
@@ -233,6 +248,14 @@ export class TransactionsComponent implements OnInit {
 
   abs(val: number): number {
     return Math.abs(val);
+  }
+
+  sanitizeDescription(desc: string): string {
+    if (!desc) return 'No description provided';
+    if (desc === 'Added via: null' || desc === 'Added via: ' || desc === 'Added via: null ') {
+      return 'Added Funds';
+    }
+    return desc;
   }
 
   exportToPdf() {

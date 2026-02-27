@@ -220,6 +220,8 @@ export class LoginComponent {
             }
             if (res.data.userId) localStorage.setItem('userId', res.data.userId.toString());
 
+            this.authService.authStatusChanged.next(true);
+
             const userRole = localStorage.getItem('role') || '';
             if (userRole.includes('ADMIN')) {
               this.router.navigate(['/admin/dashboard']);

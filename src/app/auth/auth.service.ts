@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { environment } from '../shared/constants';
 import { LoginRequest, SignupRequest, ApiResponse, JwtResponse, UpdatePasswordRequest } from '../shared/models/models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private baseUrl = `${environment.apiUrl}/auth`;
+  public authStatusChanged = new Subject<boolean>();
+
   constructor(private http: HttpClient) { }
 
   login(data: LoginRequest): Observable<ApiResponse<JwtResponse>> {
@@ -37,6 +39,7 @@ export class AuthService {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('userId');
+    this.authStatusChanged.next(false);
   }
 
   isLoggedIn(): boolean {

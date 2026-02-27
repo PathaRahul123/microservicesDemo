@@ -80,7 +80,7 @@ import { WalletService } from '../wallet.service';
           <li *ngFor="let txn of transactions" class="list-group-item txn-item p-3 d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
               <span class="badge rounded-pill me-3 px-3 py-2" [ngClass]="txn.type">{{ txn.type }}</span> 
-              <span class="fw-medium text-dark">{{ txn.description || 'No description provided' }}</span>
+              <span class="fw-medium text-dark">{{ sanitizeDescription(txn.description) }}</span>
             </div>
             <div [class.text-success]="!isOutgoing(txn)" [class.text-danger]="isOutgoing(txn)" class="fw-bold fs-5">
               {{ isOutgoing(txn) ? '-' : '+' }}₹{{ abs(txn.amount) | number:'1.2-2' }}
@@ -171,5 +171,13 @@ export class DashboardComponent implements OnInit {
 
   abs(value: number): number {
     return Math.abs(value);
+  }
+
+  sanitizeDescription(desc: string): string {
+    if (!desc) return 'No description provided';
+    if (desc === 'Added via: null' || desc === 'Added via: ' || desc === 'Added via: null ') {
+      return 'Added Funds';
+    }
+    return desc;
   }
 }

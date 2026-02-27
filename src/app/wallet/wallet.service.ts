@@ -73,7 +73,14 @@ export class WalletService {
     let params = new HttpParams();
     Object.keys(paramsObj).forEach(key => {
       if (paramsObj[key] !== null && paramsObj[key] !== '') {
-        params = params.append(key, paramsObj[key]);
+        // Handle dates - Spring Boot ISO format requires dropping the Z if it's there
+        if ((key === 'startDate' || key === 'endDate') && typeof paramsObj[key] === 'string') {
+          // Remove trailing Z if present, as the backend expects ISO Date Time without zone for LocalDateTime
+          const dateStr = paramsObj[key].endsWith('Z') ? paramsObj[key].slice(0, -1) : paramsObj[key];
+          params = params.append(key, dateStr);
+        } else {
+          params = params.append(key, paramsObj[key]);
+        }
       }
     });
     return this.http.get<ApiResponse<any>>(`${this.baseUrl}/transactions/filter`, { params });

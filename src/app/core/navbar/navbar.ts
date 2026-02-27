@@ -1,6 +1,7 @@
-import { Component, ElementRef, ViewChild, HostListener, OnInit } from '@angular/core';
+import { Component, ElementRef, ViewChild, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { NotificationService, NotificationDTO } from '../notification.service';
 
@@ -74,10 +75,11 @@ import { NotificationService, NotificationDTO } from '../notification.service';
     .notification-item .time { font-size: 11px; color: #6c757d; }
   `]
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
   showNotifications = false;
   notifications: NotificationDTO[] = [];
   unreadCount = 0;
+  private authSub?: Subscription;
 
   @ViewChild('bellIcon') bellIcon?: ElementRef;
 
@@ -90,6 +92,21 @@ export class NavbarComponent implements OnInit {
   ngOnInit() {
     if (this.authService.isLoggedIn()) {
       this.loadNotifications();
+    }
+    this.authSub = this.authService.authStatusChanged.subscribe(isLoggedIn => {
+      if (isLoggedIn) {
+        this.loadNotifications();
+      } else {
+        this.notifications = [];
+        this.unreadCount = 0;
+        this.showNotifications = false;
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.authSub) {
+      this.authSub.unsubscribe();
     }
   }
 
